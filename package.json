@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "engines": {
-    "node": ">=18.0.0"
+    "node": "18.x"
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build --debug",
+    "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -22,4 +22,3 @@
     "vite": "^4.4.9"
   }
 }
-
