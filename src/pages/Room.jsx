@@ -14,30 +14,34 @@ export default function Room() {
      RESOLVE PLAYER SYMBOL
   ========================= */
   const resolveSymbol = (roomData) => {
-    if (!roomData || !socket?.id) {
-      setSymbol(null)
-      return
-    }
+    if (!roomData || !socket.id) return
 
     const player = roomData.players?.find(
       (p) => p.socketId === socket.id
     )
 
-    setSymbol(player ? player.symbol : null) // null = spectator
+    setSymbol(player ? player.symbol : null)
   }
 
   useEffect(() => {
     if (!import.meta.env.VITE_BACKEND_URL) {
       console.error("VITE_BACKEND_URL not defined")
-      setLoading(false)
       return
     }
 
-    // 🔥 ENSURE SOCKET IS CONNECTED
     connectSocket()
 
     /* =========================
-       FETCH ROOM (HTTP)
+       SOCKET CONNECT → JOIN ROOM
+    ========================= */
+    const onConnect = () => {
+      socket.emit("joinRoom", { code })
+    }
+
+    socket.on("connect", onConnect)
+
+    /* =========================
+       FETCH ROOM (HTTP fallback)
     ========================= */
     const fetchRoom = async () => {
       try {
@@ -45,6 +49,7 @@ export default function Room() {
           `${import.meta.env.VITE_BACKEND_URL}/room/${code}`
         )
         setRoom(res.data.room)
+        resolveSymbol(res.data.room)
       } catch (err) {
         console.error(err)
         setRoom(null)
@@ -55,47 +60,40 @@ export default function Room() {
 
     fetchRoom()
 
-    // 🔥 JOIN ROOM VIA SOCKET (THIS WAS MISSING)
-    socket.emit("joinRoom", { code })
-
     /* =========================
        SOCKET EVENTS
     ========================= */
     const updateRoom = (roomData) => {
-      if (roomData?.code === code) {
-        setRoom(roomData)
-        resolveSymbol(roomData)
-      }
+      if (!roomData || roomData.code !== code) return
+      setRoom(roomData)
+      resolveSymbol(roomData)
     }
 
     socket.on("playerJoined", (d) => updateRoom(d.room))
     socket.on("joinedAsSpectator", (d) => updateRoom(d.room))
     socket.on("playerLeft", (d) => updateRoom(d.room))
-    socket.on("moveMade", (d) => {
-      setRoom((prev) =>
-        prev ? { ...prev, board: d.board, turn: d.turn } : prev
-      )
-    })
-    socket.on("gameOver", (d) => {
-      setRoom((prev) =>
-        prev ? { ...prev, board: d.board, finished: true } : prev
-      )
-    })
     socket.on("rematchStarted", (d) => updateRoom(d.room))
 
-    // 🔑 Resolve symbol once socket connects
-    socket.on("connect", () => {
-      if (room) resolveSymbol(room)
+    socket.on("moveMade", ({ board, turn }) => {
+      setRoom((prev) =>
+        prev ? { ...prev, board, turn } : prev
+      )
+    })
+
+    socket.on("gameOver", ({ board }) => {
+      setRoom((prev) =>
+        prev ? { ...prev, board, finished: true } : prev
+      )
     })
 
     return () => {
+      socket.off("connect", onConnect)
       socket.off("playerJoined")
       socket.off("joinedAsSpectator")
       socket.off("playerLeft")
       socket.off("moveMade")
       socket.off("gameOver")
       socket.off("rematchStarted")
-      socket.off("connect")
     }
   }, [code])
 
