@@ -10,7 +10,7 @@ export default function Game({ code, initialSymbol }) {
   const [votes, setVotes] = useState(0)
 
   /* =========================
-     SYNC SYMBOL
+     SYNC SYMBOL FROM ROOM
   ========================= */
   useEffect(() => {
     setSymbol(initialSymbol || null)
@@ -33,7 +33,7 @@ export default function Game({ code, initialSymbol }) {
     const onRematchStarted = ({ room }) => {
       setBoard(room.board)
       setWinner(null)
-      setTurn("X")
+      setTurn(room.turn)   // ✅ do NOT hardcode "X"
       setVotes(0)
     }
 
@@ -55,7 +55,7 @@ export default function Game({ code, initialSymbol }) {
   }, [])
 
   /* =========================
-     HANDLE CLICK
+     HANDLE CELL CLICK
   ========================= */
   const clickCell = (i) => {
     if (!symbol) return alert("You are a spectator")
@@ -66,15 +66,14 @@ export default function Game({ code, initialSymbol }) {
     socket.emit("makeMove", { code, index: i })
   }
 
-  const rematch = () => socket.emit("voteRematch", { code })
+  const rematch = () => {
+    if (!winner) return
+    socket.emit("voteRematch", { code })
+  }
 
   return (
     <div>
-      <Board
-        board={board}
-        onClick={clickCell}
-        disabled={!symbol || turn !== symbol || !!winner}
-      />
+      <Board board={board} onClick={clickCell} />
 
       <div className="game-info">
         {winner ? (
