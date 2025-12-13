@@ -10,47 +10,70 @@ export default function Room() {
   const [symbol, setSymbol] = useState(null)
   const [loading, setLoading] = useState(true)
 
+  const resolveSymbol = (roomData) => {
+    if (!roomData || !socket.id) return
+    const player = roomData.players?.find(
+      (p) => p.socketId === socket.id
+    )
+    if (player) {
+      setSymbol(player.symbol)
+    } else {
+      setSymbol(null) // spectator
+    }
+  }
+
   useEffect(() => {
-    // 🔴 Guard backend URL
     if (!import.meta.env.VITE_BACKEND_URL) {
       console.error("VITE_BACKEND_URL not defined")
       setLoading(false)
       return
     }
 
-    const token = localStorage.getItem("token")
-
-    axios
-      .get(`${import.meta.env.VITE_BACKEND_URL}/room/${code}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
-      })
-      .then((res) => {
+    const fetchRoom = async () => {
+      try {
+        const res = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/room/${code}`
+        )
         setRoom(res.data.room)
-      })
-      .catch((err) => {
+        resolveSymbol(res.data.room)
+      } catch (err) {
         console.error(err)
         setRoom(null)
-      })
-      .finally(() => setLoading(false))
+      } finally {
+        setLoading(false)
+      }
+    }
 
-    // 🔌 socket listeners (SAFE)
+    fetchRoom()
+
+    /* ===== SOCKET EVENTS ===== */
+
     const onRoomCreated = (d) => {
       if (d.code === code) {
-        setSymbol(d.symbol)
         setRoom(d.room)
+        resolveSymbol(d.room)
       }
     }
 
     const onPlayerJoined = (d) => {
-      if (d.room?.code === code) setRoom(d.room)
+      if (d.room?.code === code) {
+        setRoom(d.room)
+        resolveSymbol(d.room)
+      }
     }
 
     const onSpectator = (d) => {
-      if (d.room?.code === code) setRoom(d.room)
+      if (d.room?.code === code) {
+        setRoom(d.room)
+        resolveSymbol(d.room)
+      }
     }
 
     const onPlayerLeft = (d) => {
-      if (d.room?.code === code) setRoom(d.room)
+      if (d.room?.code === code) {
+        setRoom(d.room)
+        resolveSymbol(d.room)
+      }
     }
 
     socket.on("roomCreated", onRoomCreated)
@@ -67,7 +90,6 @@ export default function Room() {
   }, [code])
 
   if (loading) return <div>Loading room...</div>
-
   if (!room) return <div>Room not found</div>
 
   return (
