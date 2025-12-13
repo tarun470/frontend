@@ -10,16 +10,20 @@ export default function Room() {
   const [symbol, setSymbol] = useState(null)
   const [loading, setLoading] = useState(true)
 
+  /* =========================
+     RESOLVE PLAYER SYMBOL
+  ========================= */
   const resolveSymbol = (roomData) => {
-    if (!roomData || !socket.id) return
+    if (!roomData || !socket?.id) {
+      setSymbol(null)
+      return
+    }
+
     const player = roomData.players?.find(
       (p) => p.socketId === socket.id
     )
-    if (player) {
-      setSymbol(player.symbol)
-    } else {
-      setSymbol(null) // spectator
-    }
+
+    setSymbol(player ? player.symbol : null) // null = spectator
   }
 
   useEffect(() => {
@@ -29,6 +33,9 @@ export default function Room() {
       return
     }
 
+    /* =========================
+       FETCH ROOM (HTTP)
+    ========================= */
     const fetchRoom = async () => {
       try {
         const res = await axios.get(
@@ -46,46 +53,33 @@ export default function Room() {
 
     fetchRoom()
 
-    /* ===== SOCKET EVENTS ===== */
+    /* =========================
+       SOCKET EVENTS
+    ========================= */
 
-    const onRoomCreated = (d) => {
-      if (d.code === code) {
-        setRoom(d.room)
-        resolveSymbol(d.room)
+    const updateRoom = (roomData) => {
+      if (roomData?.code === code) {
+        setRoom(roomData)
+        resolveSymbol(roomData)
       }
     }
 
-    const onPlayerJoined = (d) => {
-      if (d.room?.code === code) {
-        setRoom(d.room)
-        resolveSymbol(d.room)
-      }
-    }
+    socket.on("roomCreated", (d) => updateRoom(d.room))
+    socket.on("playerJoined", (d) => updateRoom(d.room))
+    socket.on("joinedAsSpectator", (d) => updateRoom(d.room))
+    socket.on("playerLeft", (d) => updateRoom(d.room))
 
-    const onSpectator = (d) => {
-      if (d.room?.code === code) {
-        setRoom(d.room)
-        resolveSymbol(d.room)
-      }
-    }
-
-    const onPlayerLeft = (d) => {
-      if (d.room?.code === code) {
-        setRoom(d.room)
-        resolveSymbol(d.room)
-      }
-    }
-
-    socket.on("roomCreated", onRoomCreated)
-    socket.on("playerJoined", onPlayerJoined)
-    socket.on("joinedAsSpectator", onSpectator)
-    socket.on("playerLeft", onPlayerLeft)
+    // 🔑 Important: resolve symbol once socket connects
+    socket.on("connect", () => {
+      if (room) resolveSymbol(room)
+    })
 
     return () => {
-      socket.off("roomCreated", onRoomCreated)
-      socket.off("playerJoined", onPlayerJoined)
-      socket.off("joinedAsSpectator", onSpectator)
-      socket.off("playerLeft", onPlayerLeft)
+      socket.off("roomCreated")
+      socket.off("playerJoined")
+      socket.off("joinedAsSpectator")
+      socket.off("playerLeft")
+      socket.off("connect")
     }
   }, [code])
 
