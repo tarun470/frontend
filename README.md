@@ -48,58 +48,58 @@ The frontend is responsible for:
 
 ## 📁 Folder Structure (Frontend)
 
+```txt
 frontend/
 │
 ├── src/
-│ ├── components/
-│ │ ├── Board.jsx # Game board UI
-│ │ └── Header.jsx # App header
-│ │
-│ ├── pages/
-│ │ ├── Lobby.jsx # Create / Join rooms
-│ │ ├── Room.jsx # Room container
-│ │ └── Game.jsx # Game logic & UI
-│ │
-│ ├── contexts/
-│ │ └── AuthContext.jsx # Authentication context
-│ │
-│ ├── socket.js # Socket.IO client setup
-│ ├── App.jsx # Routing & layout
-│ ├── main.jsx # App entry point
-│ └── styles.css # Global styles
+│   ├── components/
+│   │   ├── Board.jsx        # Game board UI
+│   │   └── Header.jsx       # App header
+│   │
+│   ├── pages/
+│   │   ├── Lobby.jsx        # Create / Join rooms
+│   │   ├── Room.jsx         # Room container
+│   │   └── Game.jsx         # Game logic & UI
+│   │
+│   ├── contexts/
+│   │   └── AuthContext.jsx  # Authentication context
+│   │
+│   ├── socket.js            # Socket.IO client setup
+│   ├── App.jsx              # Routing & layout
+│   ├── main.jsx             # App entry point
+│   └── styles.css           # Global styles
 │
 ├── index.html
 ├── package.json
 ├── vite.config.js
 └── README.md
+🔍 Module Explanation
+🔐 AuthContext.jsx
+Stores logged-in user information
 
-yaml
-Copy code
+Manages JWT authentication state
 
----
+Protects private routes
 
-## 🔍 Module Explanation
+Ensures socket connects only after login
 
-### 🔐 AuthContext.jsx
-- Stores logged-in user information
-- Manages JWT authentication state
-- Protects routes
-- Ensures socket connects only after login
+🌐 socket.js
+Handles real-time communication with the backend:
 
----
+Connects using JWT token
 
-### 🌐 socket.js
-Handles **real-time communication** with the backend:
+Prevents multiple socket connections
 
-- Connects using JWT token
-- Prevents multiple socket connections
-- Emits and listens to game events
-- Acts as the bridge between frontend and backend
+Emits and listens to game events
+
+Acts as the bridge between frontend and backend
 
 Example:
-```js
-socket.emit("makeMove")
-socket.on("moveMade")
+
+js
+Copy code
+socket.emit("makeMove");
+socket.on("moveMade");
 🏠 Lobby.jsx
 Create a new room (1v1)
 
@@ -109,7 +109,7 @@ Join existing room
 
 Automatically navigates to the game room
 
-Manages game entry flow.
+Manages game entry flow
 
 🚪 Room.jsx
 Fetches room details
@@ -120,7 +120,7 @@ Joins the socket room
 
 Passes room data to the Game component
 
-Acts as the room controller.
+Acts as the room controller
 
 🎲 Game.jsx
 Core gameplay logic:
@@ -164,7 +164,7 @@ Players vote for rematch
 
 Votes sync via Socket.IO
 
-Once required votes reached:
+Once required votes are reached:
 
 Board resets automatically
 
@@ -196,7 +196,7 @@ arduino
 Copy code
 http://localhost:5173
 ☁️ Deployment on Render (Frontend)
-Deployment Steps:
+Deployment Steps
 Push frontend code to GitHub
 
 Go to Render → New → Static Site
@@ -250,7 +250,7 @@ Secure real-time gameplay starts
 🌍 Global leaderboard
 
 👨‍💻 Author
-Uday Kiran
+TARUN DUGGEMPUDI
 Full-Stack Developer
 React | Node.js | Socket.IO | MongoDB
 
@@ -264,14 +264,14 @@ Copy code
 
 ---
 
-If you want next, I can also:
+If you want next, I can:
 
-- ✅ Generate **Backend README**
-- ✅ Improve UI design (Tailwind / animations)
-- ✅ Write **resume-ready project description**
-- ✅ Add screenshots section
+- ✅ Write **Backend README**
+- ✅ Add **screenshots section**
+- ✅ Make it **resume / LinkedIn optimized**
+- ✅ Improve UI with **Tailwind + animations**
 
-Just say **next mama 😄**
+
 
 
 
