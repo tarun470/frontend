@@ -18,21 +18,38 @@ export default function Lobby() {
   useEffect(() => {
     connectSocket()
 
-    socket.on("roomCreated", ({ room }) => {
+    const onRoomCreated = ({ room }) => {
       setLoading(false)
       navigate(`/room/${room.code}`)
-    })
+    }
 
-    socket.on("roomError", (msg) => {
+    const onPlayerJoined = ({ room }) => {
+      setLoading(false)
+      navigate(`/room/${room.code}`)
+    }
+
+    const onSpectator = ({ room }) => {
+      setLoading(false)
+      navigate(`/room/${room.code}`)
+    }
+
+    const onRoomError = (msg) => {
       setLoading(false)
       alert(msg)
-    })
+    }
+
+    socket.on("roomCreated", onRoomCreated)
+    socket.on("playerJoined", onPlayerJoined)
+    socket.on("joinedAsSpectator", onSpectator)
+    socket.on("roomError", onRoomError)
 
     return () => {
-      socket.off("roomCreated")
-      socket.off("roomError")
+      socket.off("roomCreated", onRoomCreated)
+      socket.off("playerJoined", onPlayerJoined)
+      socket.off("joinedAsSpectator", onSpectator)
+      socket.off("roomError", onRoomError)
     }
-  }, [])
+  }, [navigate])
 
   /* =========================
      ACTIONS
@@ -54,8 +71,8 @@ export default function Lobby() {
       return
     }
 
+    setLoading(true)
     socket.emit("joinRoom", { code: code.trim().toUpperCase() })
-    navigate(`/room/${code.trim().toUpperCase()}`)
   }
 
   return (
@@ -82,7 +99,9 @@ export default function Lobby() {
           onChange={(e) => setCode(e.target.value.toUpperCase())}
           placeholder="Room Code"
         />
-        <button onClick={joinRoom}>Join Room</button>
+        <button onClick={joinRoom} disabled={loading}>
+          Join Room
+        </button>
       </div>
     </div>
   )
