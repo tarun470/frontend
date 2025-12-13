@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react"
+import React, { useContext, useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { AuthContext } from "../contexts/AuthContext"
 import { socket, connectSocket } from "../socket"
@@ -6,6 +6,7 @@ import { socket, connectSocket } from "../socket"
 export default function Lobby() {
   const auth = useContext(AuthContext)
   const navigate = useNavigate()
+  const hasNavigated = useRef(false)
 
   if (!auth) return null
 
@@ -18,36 +19,38 @@ export default function Lobby() {
   useEffect(() => {
     connectSocket()
 
+    const safeNavigate = (roomCode) => {
+      if (hasNavigated.current) return
+      hasNavigated.current = true
+      setLoading(false)
+      navigate(`/room/${roomCode}`)
+    }
+
     const onRoomCreated = ({ room }) => {
-      setLoading(false)
-      navigate(`/room/${room.code}`)
+      safeNavigate(room.code)
     }
 
-    const onPlayerJoined = ({ room }) => {
-      setLoading(false)
-      navigate(`/room/${room.code}`)
-    }
-
-    const onSpectator = ({ room }) => {
-      setLoading(false)
-      navigate(`/room/${room.code}`)
+    const onJoined = ({ room }) => {
+      safeNavigate(room.code)
     }
 
     const onRoomError = (msg) => {
       setLoading(false)
+      hasNavigated.current = false
       alert(msg)
     }
 
     socket.on("roomCreated", onRoomCreated)
-    socket.on("playerJoined", onPlayerJoined)
-    socket.on("joinedAsSpectator", onSpectator)
+    socket.on("playerJoined", onJoined)
+    socket.on("joinedAsSpectator", onJoined)
     socket.on("roomError", onRoomError)
 
     return () => {
       socket.off("roomCreated", onRoomCreated)
-      socket.off("playerJoined", onPlayerJoined)
-      socket.off("joinedAsSpectator", onSpectator)
+      socket.off("playerJoined", onJoined)
+      socket.off("joinedAsSpectator", onJoined)
       socket.off("roomError", onRoomError)
+      hasNavigated.current = false
     }
   }, [navigate])
 
@@ -56,12 +59,16 @@ export default function Lobby() {
   ========================= */
 
   const createRoom = () => {
+    if (loading) return
     setLoading(true)
+    hasNavigated.current = false
     socket.emit("createRoom")
   }
 
   const playVsAI = () => {
+    if (loading) return
     setLoading(true)
+    hasNavigated.current = false
     socket.emit("createAiRoom")
   }
 
@@ -70,8 +77,10 @@ export default function Lobby() {
       alert("Enter room code")
       return
     }
+    if (loading) return
 
     setLoading(true)
+    hasNavigated.current = false
     socket.emit("joinRoom", { code: code.trim().toUpperCase() })
   }
 
@@ -89,7 +98,7 @@ export default function Lobby() {
           style={{ marginLeft: 8 }}
           disabled={loading}
         >
-          Play vs AI
+          {loading ? "Starting..." : "Play vs AI"}
         </button>
       </div>
 
@@ -98,6 +107,7 @@ export default function Lobby() {
           value={code}
           onChange={(e) => setCode(e.target.value.toUpperCase())}
           placeholder="Room Code"
+          disabled={loading}
         />
         <button onClick={joinRoom} disabled={loading}>
           Join Room
@@ -106,3 +116,4 @@ export default function Lobby() {
     </div>
   )
 }
+

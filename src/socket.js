@@ -2,9 +2,13 @@ import { io } from "socket.io-client"
 
 const URL = import.meta.env.VITE_BACKEND_URL
 
+// 🔌 Single socket instance
 export const socket = io(URL, {
   autoConnect: false,
-  transports: ["websocket"]
+  transports: ["websocket"],
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 500
 })
 
 /* =========================
@@ -14,8 +18,8 @@ export const connectSocket = () => {
   const token = localStorage.getItem("token")
   if (!token) return
 
-  // 🔥 Prevent multiple connections
-  if (socket.connected) return
+  // ✅ Prevent duplicate connections
+  if (socket.connected || socket.connecting) return
 
   socket.auth = { token }
   socket.connect()
