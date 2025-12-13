@@ -8,6 +8,7 @@ export default function Game({ code, initialSymbol }) {
   const [turn, setTurn] = useState("X")
   const [winner, setWinner] = useState(null)
   const [votes, setVotes] = useState(0)
+  const [requiredVotes, setRequiredVotes] = useState(1)
 
   /* =========================
      SYNC SYMBOL FROM ROOM
@@ -33,12 +34,14 @@ export default function Game({ code, initialSymbol }) {
     const onRematchStarted = ({ room }) => {
       setBoard(room.board)
       setWinner(null)
-      setTurn(room.turn)   // ✅ do NOT hardcode "X"
+      setTurn(room.turn)
       setVotes(0)
+      setRequiredVotes(room.isAI ? 1 : 2)
     }
 
-    const onRematchVote = ({ votes }) => {
+    const onRematchVote = ({ votes, required }) => {
       setVotes(votes)
+      setRequiredVotes(required)
     }
 
     socket.on("moveMade", onMoveMade)
@@ -84,7 +87,14 @@ export default function Game({ code, initialSymbol }) {
           <div>Turn: {turn}</div>
         )}
 
-        <div>Rematch votes: {votes}</div>
+        {/* ✅ REMATCH MESSAGE */}
+        {winner && (
+          <div style={{ marginTop: 8 }}>
+            {votes === 0 && "Click Rematch to play again"}
+            {votes > 0 && votes < requiredVotes &&
+              "Waiting for other player to accept rematch..."}
+          </div>
+        )}
 
         <button onClick={rematch} disabled={!winner}>
           Rematch
@@ -93,3 +103,4 @@ export default function Game({ code, initialSymbol }) {
     </div>
   )
 }
+
