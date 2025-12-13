@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react"
 import { useParams } from "react-router-dom"
 import axios from "axios"
 import Game from "./Game"
-import { socket } from "../socket"
+import { socket, connectSocket } from "../socket"
 
 export default function Room() {
   const { code } = useParams()
@@ -33,6 +33,9 @@ export default function Room() {
       return
     }
 
+    // 🔥 ENSURE SOCKET IS CONNECTED
+    connectSocket()
+
     /* =========================
        FETCH ROOM (HTTP)
     ========================= */
@@ -42,7 +45,6 @@ export default function Room() {
           `${import.meta.env.VITE_BACKEND_URL}/room/${code}`
         )
         setRoom(res.data.room)
-        resolveSymbol(res.data.room)
       } catch (err) {
         console.error(err)
         setRoom(null)
@@ -53,10 +55,12 @@ export default function Room() {
 
     fetchRoom()
 
+    // 🔥 JOIN ROOM VIA SOCKET (THIS WAS MISSING)
+    socket.emit("joinRoom", { code })
+
     /* =========================
        SOCKET EVENTS
     ========================= */
-
     const updateRoom = (roomData) => {
       if (roomData?.code === code) {
         setRoom(roomData)
@@ -64,21 +68,33 @@ export default function Room() {
       }
     }
 
-    socket.on("roomCreated", (d) => updateRoom(d.room))
     socket.on("playerJoined", (d) => updateRoom(d.room))
     socket.on("joinedAsSpectator", (d) => updateRoom(d.room))
     socket.on("playerLeft", (d) => updateRoom(d.room))
+    socket.on("moveMade", (d) => {
+      setRoom((prev) =>
+        prev ? { ...prev, board: d.board, turn: d.turn } : prev
+      )
+    })
+    socket.on("gameOver", (d) => {
+      setRoom((prev) =>
+        prev ? { ...prev, board: d.board, finished: true } : prev
+      )
+    })
+    socket.on("rematchStarted", (d) => updateRoom(d.room))
 
-    // 🔑 Important: resolve symbol once socket connects
+    // 🔑 Resolve symbol once socket connects
     socket.on("connect", () => {
       if (room) resolveSymbol(room)
     })
 
     return () => {
-      socket.off("roomCreated")
       socket.off("playerJoined")
       socket.off("joinedAsSpectator")
       socket.off("playerLeft")
+      socket.off("moveMade")
+      socket.off("gameOver")
+      socket.off("rematchStarted")
       socket.off("connect")
     }
   }, [code])

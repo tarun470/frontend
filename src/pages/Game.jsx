@@ -9,92 +9,87 @@ export default function Game({ code, initialSymbol }) {
   const [winner, setWinner] = useState(null)
   const [votes, setVotes] = useState(0)
 
-  // 🔄 Sync initialSymbol safely
+  /* =========================
+     SYNC SYMBOL
+  ========================= */
   useEffect(() => {
-    if (initialSymbol) setSymbol(initialSymbol)
+    setSymbol(initialSymbol || null)
   }, [initialSymbol])
 
+  /* =========================
+     SOCKET EVENTS
+  ========================= */
   useEffect(() => {
-    // 🔌 Define handlers explicitly (important!)
-    const onMoveMade = (data) => {
-      setBoard(data.board)
-      setTurn(data.turn)
+    const onMoveMade = ({ board, turn }) => {
+      setBoard(board)
+      setTurn(turn)
     }
 
-    const onGameOver = (data) => {
-      setBoard(data.board)
-      setWinner(data.winner)
+    const onGameOver = ({ board, winner }) => {
+      setBoard(board)
+      setWinner(winner)
     }
 
-    const onRematchStarted = (data) => {
-      setBoard(data.room.board)
+    const onRematchStarted = ({ room }) => {
+      setBoard(room.board)
       setWinner(null)
       setTurn("X")
       setVotes(0)
     }
 
-    const onRematchVote = (data) => {
-      setVotes(data.votes)
-    }
-
-    const onRoomCreated = (d) => {
-      if (d.code === code) setSymbol(d.symbol)
-    }
-
-    const onSpectator = (d) => {
-      if (d.room?.code === code) {
-        setBoard(d.room.board)
-        setWinner(d.room.winner || null)
-        setTurn(d.room.turn || "X")
-      }
+    const onRematchVote = ({ votes }) => {
+      setVotes(votes)
     }
 
     socket.on("moveMade", onMoveMade)
     socket.on("gameOver", onGameOver)
     socket.on("rematchStarted", onRematchStarted)
     socket.on("rematchVote", onRematchVote)
-    socket.on("roomCreated", onRoomCreated)
-    socket.on("joinedAsSpectator", onSpectator)
 
     return () => {
       socket.off("moveMade", onMoveMade)
       socket.off("gameOver", onGameOver)
       socket.off("rematchStarted", onRematchStarted)
       socket.off("rematchVote", onRematchVote)
-      socket.off("roomCreated", onRoomCreated)
-      socket.off("joinedAsSpectator", onSpectator)
     }
-  }, [code])
+  }, [])
 
+  /* =========================
+     HANDLE CLICK
+  ========================= */
   const clickCell = (i) => {
-    if (board[i] || winner) return
-    if (!symbol) {
-      alert("Waiting for symbol assignment…")
-      return
-    }
-    if (turn !== symbol) {
-      alert("Not your turn")
-      return
-    }
-    socket.emit("makeMove", { code, index: i, symbol })
+    if (!symbol) return alert("You are a spectator")
+    if (winner) return
+    if (board[i]) return
+    if (turn !== symbol) return alert("Not your turn")
+
+    socket.emit("makeMove", { code, index: i })
   }
 
   const rematch = () => socket.emit("voteRematch", { code })
 
   return (
     <div>
-      <Board board={board} onClick={clickCell} />
+      <Board
+        board={board}
+        onClick={clickCell}
+        disabled={!symbol || turn !== symbol || !!winner}
+      />
 
       <div className="game-info">
         {winner ? (
-          <div className="winner">Winner: {winner}</div>
+          <div className="winner">
+            {winner === "draw" ? "Draw!" : `Winner: ${winner}`}
+          </div>
         ) : (
           <div>Turn: {turn}</div>
         )}
 
         <div>Rematch votes: {votes}</div>
 
-        <button onClick={rematch}>Rematch</button>
+        <button onClick={rematch} disabled={!winner}>
+          Rematch
+        </button>
       </div>
     </div>
   )
