@@ -1,31 +1,63 @@
-import React from 'react'
-import { createRoot } from 'react-dom/client'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import App from './App'
-import Lobby from './pages/Lobby'
-import Room from './pages/Room'
-import Login from './pages/Login'
-import Register from './pages/Register'
-import { AuthProvider, AuthContext } from './contexts/AuthContext'
-import './styles.css'
+import React from "react"
+import { createRoot } from "react-dom/client"
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
+import App from "./App"
+import Login from "./pages/Login"
+import Register from "./pages/Register"
+import Lobby from "./pages/Lobby"
+import Room from "./pages/Room"
+import { AuthProvider, AuthContext } from "./contexts/AuthContext"
+import "./styles.css"
 
-function Protected({ children }) {
+function ProtectedRoute({ children }) {
   const { user } = React.useContext(AuthContext)
-  if (!user) return <Navigate to="/login" />
-  return children
+  return user ? children : <Navigate to="/login" replace />
 }
 
-createRoot(document.getElementById('root')).render(
+function PublicRoute({ children }) {
+  const { user } = React.useContext(AuthContext)
+  return user ? <Navigate to="/" replace /> : children
+}
+
+createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<App />}>
-            <Route index element={<Protected><Lobby /></Protected>} />
-            <Route path="room/:code" element={<Protected><Room /></Protected>} />
-            <Route path="login" element={<Login />} />
-            <Route path="register" element={<Register />} />
+          {/* 🔐 Public */}
+          <Route
+            path="/login"
+            element={
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            }
+          />
+
+          <Route
+            path="/register"
+            element={
+              <PublicRoute>
+                <Register />
+              </PublicRoute>
+            }
+          />
+
+          {/* 🔐 Protected */}
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <App />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Lobby />} />
+            <Route path="room/:code" element={<Room />} />
           </Route>
+
+          {/* ❌ Fallback */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

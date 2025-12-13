@@ -1,4 +1,4 @@
-import { useState, useContext } from "react"
+import { useState, useContext, useEffect } from "react"
 import axios from "axios"
 import { AuthContext } from "../contexts/AuthContext"
 import { useNavigate, Link } from "react-router-dom"
@@ -10,11 +10,18 @@ export default function Login() {
   // 🔴 Guard against undefined context
   if (!auth) return null
 
-  const { login } = auth
+  const { user, login } = auth
 
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
+
+  // ✅ If already logged in → go to home
+  useEffect(() => {
+    if (user) {
+      navigate("/")
+    }
+  }, [user, navigate])
 
   async function submit() {
     if (!username || !password) {
@@ -40,12 +47,15 @@ export default function Login() {
         return
       }
 
+      // ✅ Save auth
       localStorage.setItem("token", res.data.token)
       login(res.data.user)
+
+      // ✅ Redirect to app
       navigate("/")
     } catch (err) {
       console.error(err)
-      alert("Login failed")
+      alert("Invalid username or password")
     } finally {
       setLoading(false)
     }

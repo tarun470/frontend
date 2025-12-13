@@ -1,16 +1,9 @@
-import { useState, useContext } from "react"
+import { useState } from "react"
 import axios from "axios"
-import { AuthContext } from "../contexts/AuthContext"
 import { useNavigate, Link } from "react-router-dom"
 
 export default function Register() {
-  const auth = useContext(AuthContext)
   const navigate = useNavigate()
-
-  // 🔴 Guard against undefined context
-  if (!auth) return null
-
-  const { login } = auth
 
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
@@ -40,9 +33,8 @@ export default function Register() {
         return
       }
 
-      localStorage.setItem("token", res.data.token)
-      login(res.data.user)
-      navigate("/")
+      alert("Registration successful! Please login.")
+      navigate("/login")   // ✅ redirect to login
     } catch (err) {
       console.error(err)
       alert("Registration failed")

@@ -35,8 +35,13 @@ export const AuthProvider = ({ children }) => {
     setUser(null)
   }
 
-  // 🔴 THIS PREVENTS BLANK PAGE
-  if (loading) return null
+  if (loading) {
+    return (
+      <div style={{ textAlign: "center", marginTop: "40px" }}>
+        Loading...
+      </div>
+    )
+  }
 
   return (
     <AuthContext.Provider value={{ user, login, logout }}>
@@ -44,4 +49,3 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   )
 }
-
