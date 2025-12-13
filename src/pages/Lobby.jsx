@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { AuthContext } from "../contexts/AuthContext"
 import { socket, connectSocket } from "../socket"
+import "./Lobby.css"
 
 export default function Lobby() {
   const auth = useContext(AuthContext)
@@ -57,7 +58,6 @@ export default function Lobby() {
   /* =========================
      ACTIONS
   ========================= */
-
   const createRoom = () => {
     if (loading) return
     setLoading(true)
@@ -85,35 +85,35 @@ export default function Lobby() {
   }
 
   return (
-    <div className="lobby">
-      <h2>Lobby</h2>
+    <div className="lobby-wrapper">
+      <div className="lobby-card">
 
-      <div>
-        <button onClick={createRoom} disabled={loading}>
-          {loading ? "Creating..." : "Create Room (1v1)"}
-        </button>
+        <h2 className="lobby-title">Game Lobby</h2>
 
-        <button
-          onClick={playVsAI}
-          style={{ marginLeft: 8 }}
-          disabled={loading}
-        >
-          {loading ? "Starting..." : "Play vs AI"}
-        </button>
-      </div>
+        <div className="lobby-actions">
+          <button onClick={createRoom} disabled={loading}>
+            {loading ? "Creating..." : "Create Room (1v1)"}
+          </button>
 
-      <div style={{ marginTop: 12 }}>
-        <input
-          value={code}
-          onChange={(e) => setCode(e.target.value.toUpperCase())}
-          placeholder="Room Code"
-          disabled={loading}
-        />
-        <button onClick={joinRoom} disabled={loading}>
-          Join Room
-        </button>
+          <button onClick={playVsAI} disabled={loading}>
+            {loading ? "Starting..." : "Play vs AI"}
+          </button>
+        </div>
+
+        <div className="join-section">
+          <input
+            value={code}
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            placeholder="Enter Room Code"
+            disabled={loading}
+          />
+
+          <button onClick={joinRoom} disabled={loading}>
+            Join Room
+          </button>
+        </div>
+
       </div>
     </div>
   )
 }
-

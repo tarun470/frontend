@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom"
 import axios from "axios"
 import Game from "./Game"
 import { socket, connectSocket } from "../socket"
+import "./Room.css"
 
 export default function Room() {
   const { code } = useParams()
@@ -97,13 +98,38 @@ export default function Room() {
     }
   }, [code])
 
-  if (loading) return <div>Loading room...</div>
-  if (!room) return <div>Room not found</div>
+  if (loading) {
+    return (
+      <div className="room-wrapper">
+        <div className="room-card">Loading room...</div>
+      </div>
+    )
+  }
+
+  if (!room) {
+    return (
+      <div className="room-wrapper">
+        <div className="room-card error">Room not found</div>
+      </div>
+    )
+  }
 
   return (
-    <div>
-      <h2>Room {code}</h2>
-      <Game code={code} initialSymbol={symbol} />
+    <div className="room-wrapper">
+      <div className="room-card">
+
+        <h2 className="room-title">Room Code</h2>
+        <div className="room-code">{code}</div>
+
+        <div className="player-info">
+          {symbol
+            ? `You are playing as "${symbol}"`
+            : "You are watching as a spectator"}
+        </div>
+
+        <Game code={code} initialSymbol={symbol} />
+
+      </div>
     </div>
   )
 }

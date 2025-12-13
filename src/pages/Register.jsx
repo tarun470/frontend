@@ -1,6 +1,7 @@
 import { useState } from "react"
 import axios from "axios"
 import { useNavigate, Link } from "react-router-dom"
+import "./Auth.css"
 
 export default function Register() {
   const navigate = useNavigate()
@@ -34,7 +35,7 @@ export default function Register() {
       }
 
       alert("Registration successful! Please login.")
-      navigate("/login")   // ✅ redirect to login
+      navigate("/login")
     } catch (err) {
       console.error(err)
       alert("Registration failed")
@@ -44,30 +45,43 @@ export default function Register() {
   }
 
   return (
-    <div className="auth-card">
-      <h2>Register</h2>
+    <div className="auth-wrapper">
+      <div className="auth-card">
 
-      <input
-        placeholder="Username"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-      />
+        <h2 className="auth-title">Create Account</h2>
+        <p className="auth-subtitle">Join and start playing</p>
 
-      <input
-        placeholder="Password"
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
+        <input
+          className="auth-input"
+          placeholder="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          disabled={loading}
+        />
 
-      <button onClick={submit} disabled={loading}>
-        {loading ? "Registering..." : "Register"}
-      </button>
+        <input
+          className="auth-input"
+          placeholder="Password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          disabled={loading}
+        />
 
-      <p>
-        Already have an account?{" "}
-        <Link to="/login">Login</Link>
-      </p>
+        <button
+          className="auth-btn"
+          onClick={submit}
+          disabled={loading}
+        >
+          {loading ? "Registering..." : "Register"}
+        </button>
+
+        <p className="auth-footer">
+          Already have an account?{" "}
+          <Link to="/login">Login</Link>
+        </p>
+
+      </div>
     </div>
   )
 }

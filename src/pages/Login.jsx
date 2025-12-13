@@ -2,6 +2,7 @@ import { useState, useContext, useEffect } from "react"
 import axios from "axios"
 import { AuthContext } from "../contexts/AuthContext"
 import { useNavigate, Link } from "react-router-dom"
+import "./Auth.css"
 
 export default function Login() {
   const auth = useContext(AuthContext)
@@ -47,11 +48,9 @@ export default function Login() {
         return
       }
 
-      // ✅ Save auth
       localStorage.setItem("token", res.data.token)
       login(res.data.user)
 
-      // ✅ Redirect to app
       navigate("/")
     } catch (err) {
       console.error(err)
@@ -62,30 +61,43 @@ export default function Login() {
   }
 
   return (
-    <div className="auth-card">
-      <h2>Login</h2>
+    <div className="auth-wrapper">
+      <div className="auth-card">
 
-      <input
-        placeholder="Username"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-      />
+        <h2 className="auth-title">Welcome Back</h2>
+        <p className="auth-subtitle">Login to continue</p>
 
-      <input
-        placeholder="Password"
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
+        <input
+          className="auth-input"
+          placeholder="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          disabled={loading}
+        />
 
-      <button onClick={submit} disabled={loading}>
-        {loading ? "Logging in..." : "Login"}
-      </button>
+        <input
+          className="auth-input"
+          placeholder="Password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          disabled={loading}
+        />
 
-      <p>
-        Don’t have an account?{" "}
-        <Link to="/register">Register</Link>
-      </p>
+        <button
+          className="auth-btn"
+          onClick={submit}
+          disabled={loading}
+        >
+          {loading ? "Logging in..." : "Login"}
+        </button>
+
+        <p className="auth-footer">
+          Don’t have an account?{" "}
+          <Link to="/register">Register</Link>
+        </p>
+
+      </div>
     </div>
   )
 }

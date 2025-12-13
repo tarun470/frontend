@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react"
 import Board from "../components/Board"
 import { socket } from "../socket"
+import "./Game.css"
 
 export default function Game({ code, initialSymbol }) {
   const [board, setBoard] = useState(Array(9).fill(null))
@@ -75,30 +76,41 @@ export default function Game({ code, initialSymbol }) {
   }
 
   return (
-    <div>
-      <Board board={board} onClick={clickCell} />
+    <div className="game-wrapper">
+      <div className="game-card">
 
-      <div className="game-info">
-        {winner ? (
-          <div className="winner">
-            {winner === "draw" ? "Draw!" : `Winner: ${winner}`}
-          </div>
-        ) : (
-          <div>Turn: {turn}</div>
-        )}
+        <h2 className="game-title">Tic Tac Toe</h2>
 
-        {/* ✅ REMATCH MESSAGE */}
-        {winner && (
-          <div style={{ marginTop: 8 }}>
-            {votes === 0 && "Click Rematch to play again"}
-            {votes > 0 && votes < requiredVotes &&
-              "Waiting for other player to accept rematch..."}
-          </div>
-        )}
+        <Board board={board} onClick={clickCell} />
 
-        <button onClick={rematch} disabled={!winner}>
-          Rematch
-        </button>
+        <div className="game-info">
+          {winner ? (
+            <div className={`status ${winner === "draw" ? "draw" : "win"}`}>
+              {winner === "draw" ? "🤝 Match Draw" : `🏆 Winner: ${winner}`}
+            </div>
+          ) : (
+            <div className="status turn">
+              Turn: <span>{turn}</span>
+            </div>
+          )}
+
+          {winner && (
+            <div className="rematch-info">
+              {votes === 0 && "Click rematch to play again"}
+              {votes > 0 && votes < requiredVotes &&
+                "Waiting for other player to accept rematch..."}
+            </div>
+          )}
+
+          <button
+            className="rematch-btn"
+            onClick={rematch}
+            disabled={!winner}
+          >
+            Rematch
+          </button>
+        </div>
+
       </div>
     </div>
   )
