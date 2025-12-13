@@ -264,17 +264,5 @@ Copy code
 
 ---
 
-If you want next, I can:
-
-- ✅ Write **Backend README**
-- ✅ Add **screenshots section**
-- ✅ Make it **resume / LinkedIn optimized**
-- ✅ Improve UI with **Tailwind + animations**
-
-
-
-
-
-
 
 
