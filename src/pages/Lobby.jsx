@@ -1,42 +1,109 @@
-import React, { useContext, useState } from 'react'
-import axios from 'axios'
-import { useNavigate } from 'react-router-dom'
-import { AuthContext } from '../contexts/AuthContext'
-import { socket } from '../socket'
+import React, { useContext, useState } from "react"
+import axios from "axios"
+import { useNavigate } from "react-router-dom"
+import { AuthContext } from "../contexts/AuthContext"
+import { socket } from "../socket"
 
 export default function Lobby() {
-  const { user } = useContext(AuthContext)
-  const [code, setCode] = useState('')
+  const auth = useContext(AuthContext)
   const navigate = useNavigate()
 
+  // 🔴 Guard context
+  if (!auth) return null
+
+  const { user } = auth
+  const [code, setCode] = useState("")
+  const [loading, setLoading] = useState(false)
+
   const createRoom = async () => {
-    const token = localStorage.getItem('token')
+    if (!import.meta.env.VITE_BACKEND_URL) {
+      alert("Backend URL not configured")
+      return
+    }
+
+    const token = localStorage.getItem("token")
+    if (!token) {
+      alert("Not authenticated")
+      return
+    }
+
     try {
-      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/room/create`, { token })
-      const room = res.data.room
-      // call socket to create room (so socket knows your socketId/presence)
-      socket.emit('createRoom', { token })
-      socket.once('roomCreated', (d) => {
+      setLoading(true)
+
+      // create room via API
+      await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/room/create`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+
+      // notify socket
+      socket.emit("createRoom", { token })
+
+      const onCreated = (d) => {
+        socket.off("roomCreated", onCreated)
         navigate(`/room/${d.code}`)
-      })
+      }
+
+      socket.on("roomCreated", onCreated)
     } catch (err) {
-      alert('Could not create room')
+      console.error(err)
+      alert("Could not create room")
+    } finally {
+      setLoading(false)
     }
   }
 
   const joinRoom = () => {
-    const token = localStorage.getItem('token')
-    socket.emit('joinRoom', { code, token })
-    socket.once('playerJoined', () => navigate(`/room/${code}`))
-    socket.once('joinedAsSpectator', () => navigate(`/room/${code}`))
-    socket.once('error', (msg) => alert(msg))
+    if (!code) {
+      alert("Enter room code")
+      return
+    }
+
+    const token = localStorage.getItem("token")
+    if (!token) {
+      alert("Not authenticated")
+      return
+    }
+
+    const onJoin = () => {
+      cleanup()
+      navigate(`/room/${code}`)
+    }
+
+    const onError = (msg) => {
+      cleanup()
+      alert(msg)
+    }
+
+    const cleanup = () => {
+      socket.off("playerJoined", onJoin)
+      socket.off("joinedAsSpectator", onJoin)
+      socket.off("error", onError)
+    }
+
+    socket.on("playerJoined", onJoin)
+    socket.on("joinedAsSpectator", onJoin)
+    socket.on("error", onError)
+
+    socket.emit("joinRoom", { code, token })
   }
 
   const joinAI = () => {
-    // create a room and then play alone (socket createRoom, but server logic already handles 1 player = AI)
-    const token = localStorage.getItem('token')
-    socket.emit('createRoom', { token })
-    socket.once('roomCreated', (d) => navigate(`/room/${d.code}`))
+    const token = localStorage.getItem("token")
+    if (!token) {
+      alert("Not authenticated")
+      return
+    }
+
+    socket.emit("createRoom", { token })
+
+    const onCreated = (d) => {
+      socket.off("roomCreated", onCreated)
+      navigate(`/room/${d.code}`)
+    }
+
+    socket.on("roomCreated", onCreated)
   }
 
   return (
@@ -44,12 +111,25 @@ export default function Lobby() {
       <h2>Lobby</h2>
 
       <div>
-        <button onClick={createRoom}>Create Room (1v1)</button>
-        <button onClick={joinAI} style={{ marginLeft: 8 }}>Play vs AI</button>
+        <button onClick={createRoom} disabled={loading}>
+          {loading ? "Creating..." : "Create Room (1v1)"}
+        </button>
+
+        <button
+          onClick={joinAI}
+          style={{ marginLeft: 8 }}
+          disabled={loading}
+        >
+          Play vs AI
+        </button>
       </div>
 
       <div style={{ marginTop: 12 }}>
-        <input value={code} onChange={e => setCode(e.target.value.toUpperCase())} placeholder="Room Code" />
+        <input
+          value={code}
+          onChange={(e) => setCode(e.target.value.toUpperCase())}
+          placeholder="Room Code"
+        />
         <button onClick={joinRoom}>Join Room</button>
       </div>
     </div>

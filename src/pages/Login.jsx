@@ -1,33 +1,81 @@
-import { useState, useContext } from 'react'
-import axios from 'axios'
-import { AuthContext } from '../contexts/AuthContext'
-import { useNavigate } from 'react-router-dom'
+import { useState, useContext } from "react"
+import axios from "axios"
+import { AuthContext } from "../contexts/AuthContext"
+import { useNavigate, Link } from "react-router-dom"
 
 export default function Login() {
-  const { login } = useContext(AuthContext)
+  const auth = useContext(AuthContext)
   const navigate = useNavigate()
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
+
+  // 🔴 Guard against undefined context
+  if (!auth) return null
+
+  const { login } = auth
+
+  const [username, setUsername] = useState("")
+  const [password, setPassword] = useState("")
+  const [loading, setLoading] = useState(false)
 
   async function submit() {
+    if (!username || !password) {
+      alert("Username and password required")
+      return
+    }
+
+    if (!import.meta.env.VITE_BACKEND_URL) {
+      alert("Backend URL not configured")
+      return
+    }
+
     try {
-      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/auth/login`, { username, password })
-      if (res.data.error) { alert(res.data.error); return }
-      localStorage.setItem('token', res.data.token)
+      setLoading(true)
+
+      const res = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/auth/login`,
+        { username, password }
+      )
+
+      if (res.data?.error) {
+        alert(res.data.error)
+        return
+      }
+
+      localStorage.setItem("token", res.data.token)
       login(res.data.user)
-      navigate('/')
+      navigate("/")
     } catch (err) {
-      alert('Login failed')
+      console.error(err)
+      alert("Login failed")
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
     <div className="auth-card">
       <h2>Login</h2>
-      <input placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} />
-      <input placeholder="Password" type="password" value={password} onChange={e => setPassword(e.target.value)} />
-      <button onClick={submit}>Login</button>
-      <p>Don't have an account? <a href="/register">Register</a></p>
+
+      <input
+        placeholder="Username"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+      />
+
+      <input
+        placeholder="Password"
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+
+      <button onClick={submit} disabled={loading}>
+        {loading ? "Logging in..." : "Login"}
+      </button>
+
+      <p>
+        Don’t have an account?{" "}
+        <Link to="/register">Register</Link>
+      </p>
     </div>
   )
 }
